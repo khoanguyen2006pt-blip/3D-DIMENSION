@@ -587,7 +587,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   return (
     <div className="relative w-full h-full flex flex-row overflow-hidden select-none bg-[#0D1117] text-[#E6EAF0]">
       {/* 1. MAIN 3D CANVAS VIEWPORT (Takes maximal area) */}
-      <div className="relative flex-1 h-full overflow-hidden" ref={canvasMountRef} style={{ touchAction: 'none' }}>
+      <div className="relative flex-1 h-full overflow-hidden">
+        {/* Dedicated 3D Canvas Mount Point */}
+        <div ref={canvasMountRef} className="absolute inset-0 w-full h-full" style={{ touchAction: 'none' }} />
+
         {/* Error Notification */}
         {snapshotError && (
           <div role="alert" className="absolute right-4 top-4 z-30 px-3 py-1.5 rounded bg-[#2d1b1f] border border-[#7f1d1d] text-xs text-[#f87171]">

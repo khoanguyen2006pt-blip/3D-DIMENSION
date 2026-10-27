@@ -347,8 +347,22 @@ export async function saveExperiment(experiment: NewExperiment): Promise<string>
 }
 
 // 3. SEED INITIAL DATA
+function findDatasetFilePath(filename: string): string {
+  const candidates = [
+    path.resolve(process.cwd(), 'public', filename),
+    path.resolve(process.cwd(), 'data', 'raw', filename),
+    path.resolve(process.cwd(), 'data', filename),
+    path.resolve(process.cwd(), filename),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+// 3. SEED INITIAL DATA
 async function seedInitialDataset(database: Db) {
-  const cancerCsvPath = path.resolve(process.cwd(), 'data.csv');
+  const cancerCsvPath = findDatasetFilePath('data.csv');
   if (fs.existsSync(cancerCsvPath)) {
     const count = await database.collection('datasets').countDocuments({ id: 'cancer_wdbc' });
     if (count === 0) {
@@ -372,7 +386,7 @@ async function seedInitialDataset(database: Db) {
     }
   }
 
-  const wholesaleCsvPath = path.resolve(process.cwd(), 'public', 'wholesale.csv');
+  const wholesaleCsvPath = findDatasetFilePath('wholesale.csv');
   if (fs.existsSync(wholesaleCsvPath)) {
     const count = await database.collection('datasets').countDocuments({ id: 'wholesale_customers' });
     if (count === 0) {
@@ -398,7 +412,7 @@ async function seedInitialDataset(database: Db) {
 }
 
 async function seedInitialDatasetMemory() {
-  const cancerCsvPath = path.resolve(process.cwd(), 'data.csv');
+  const cancerCsvPath = findDatasetFilePath('data.csv');
   if (fs.existsSync(cancerCsvPath)) {
     const csvContent = fs.readFileSync(cancerCsvPath, 'utf-8');
     const parsed = parseCSVString(csvContent, 'Wisconsin Breast Cancer');
@@ -416,7 +430,7 @@ async function seedInitialDatasetMemory() {
     });
   }
 
-  const wholesaleCsvPath = path.resolve(process.cwd(), 'public', 'wholesale.csv');
+  const wholesaleCsvPath = findDatasetFilePath('wholesale.csv');
   if (fs.existsSync(wholesaleCsvPath)) {
     const csvContent = fs.readFileSync(wholesaleCsvPath, 'utf-8');
     const parsed = parseCSVString(csvContent, 'Wholesale Customers');

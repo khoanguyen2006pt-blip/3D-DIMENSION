@@ -482,6 +482,7 @@ export function App() {
   const runPipeline = useCallback(async () => {
     if (!dataset || selectedFeatures.length < MIN_NUMERIC_FEATURES) return;
 
+    setActiveArea('reduction');
     setIsComputing(true);
     setLoadingMessage(`Đang giảm chiều dữ liệu bằng ${reductionConfig.method}...`);
 
@@ -497,7 +498,7 @@ export function App() {
       setFeatureMatrix(matrix);
 
       const groundTruth: DataValue[] = dataset.labelColumn
-        ? dataset.rawRows.map((r) => r[dataset.labelColumn!])
+        ? dataset.rawRows.map((r) => r[dataset.labelColumn!] ?? null)
         : [];
 
       let coordinates: [number, number, number][] = [];
@@ -679,6 +680,7 @@ export function App() {
       ? computeARI(groundTruth, clusterAssignments)
       : null;
 
+    setActiveArea('clustering');
     const durationMs = Math.round(performance.now() - startTime);
 
     setDataPoints((points) => points.map((point, index) => ({
@@ -702,8 +704,8 @@ export function App() {
       message: `Đã áp dụng phân cụm ${config.method} thành công (${durationMs} ms)!`,
     });
   };
-  const isRawDataArea = activeArea === 'dataset';
-  const displayedPoints = isRawDataArea ? rawPreviewPoints : dataPoints;
+  const isRawDataArea = activeArea === 'dataset' && dataPoints.length === 0;
+  const displayedPoints = isRawDataArea ? rawPreviewPoints : (dataPoints.length > 0 ? dataPoints : rawPreviewPoints);
 
   // 4. LIVE OPTIMIZATION ANIMATION LOOP FOR t-SNE / UMAP
   const handleToggleLiveAnimation = () => {

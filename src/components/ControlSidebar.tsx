@@ -492,7 +492,10 @@ export const ControlSidebar: React.FC<ControlSidebarProps> = ({
               {/* Primary Run Reduction Button */}
               <button
                 type="button"
-                onClick={onRunComputation}
+                onClick={() => {
+                  onActiveTabChange('reduction');
+                  onRunComputation();
+                }}
                 disabled={!canRun}
                 className="w-full flex items-center justify-center gap-2 py-2 rounded bg-[#8B9CFB] hover:bg-[#7a8ce8] text-[#0D1117] font-semibold text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -795,7 +798,10 @@ export const ControlSidebar: React.FC<ControlSidebarProps> = ({
               {/* Apply Clustering Button */}
               <button
                 type="button"
-                onClick={onApplyClustering}
+                onClick={() => {
+                  onActiveTabChange('clustering');
+                  onApplyClustering();
+                }}
                 disabled={!hasResults || isComputing}
                 className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-[#202936] hover:bg-[#283547] border border-[#303A49] text-[#E6EAF0] font-semibold text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
