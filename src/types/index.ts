@@ -128,4 +128,5 @@ export interface EvaluationMetrics {
   totalVarianceExplained?: number;
   clusterCounts: Record<number, number>;
   noiseCount?: number;
+  executionTimeMs?: number | null;
 }

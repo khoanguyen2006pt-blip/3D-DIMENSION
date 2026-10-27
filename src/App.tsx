@@ -485,6 +485,7 @@ export function App() {
     setIsComputing(true);
     setLoadingMessage(`Đang giảm chiều dữ liệu bằng ${reductionConfig.method}...`);
 
+    const startTime = performance.now();
     await new Promise((r) => setTimeout(r, 40));
 
     try {
@@ -557,6 +558,8 @@ export function App() {
         totalExpVar = primaryRes.totalExplainedVariance;
       }
 
+      const durationMs = Math.round(performance.now() - startTime);
+
       setMetrics({
         silhouetteScore: null,
         adjustedRandIndex: null,
@@ -564,6 +567,7 @@ export function App() {
         totalVarianceExplained: totalExpVar,
         clusterCounts: {},
         noiseCount: 0,
+        executionTimeMs: durationMs,
       });
 
       // Assemble Primary DataPoints
@@ -644,6 +648,7 @@ export function App() {
   const handleApplyClustering = (config: ClusteringConfig = clusteringConfig) => {
     if (dataPoints.length === 0 || isComputing) return;
 
+    const startTime = performance.now();
     const coordinates = dataPoints.map((point) => [point.x, point.y, point.z] as [number, number, number]);
     let clusterAssignments: number[];
     let noiseCount = 0;
@@ -671,6 +676,8 @@ export function App() {
       ? computeARI(groundTruth, clusterAssignments)
       : null;
 
+    const durationMs = Math.round(performance.now() - startTime);
+
     setDataPoints((points) => points.map((point, index) => ({
       ...point,
       cluster: clusterAssignments[index] ?? 0,
@@ -685,6 +692,7 @@ export function App() {
       adjustedRandIndex,
       clusterCounts,
       noiseCount,
+      executionTimeMs: (current.executionTimeMs || 0) + durationMs,
     }));
   };
   const isRawDataArea = activeArea === 'dataset';
@@ -875,24 +883,24 @@ export function App() {
   };
 
   return (
-    <div className={`flex h-screen w-screen overflow-hidden font-sans select-none transition-colors duration-200 ${theme === 'light' ? 'bg-slate-100 text-slate-800' : 'bg-slate-950 text-slate-100'}`}>
+    <div className="flex h-screen w-screen overflow-hidden font-sans select-none bg-[#0D1117] text-[#E6EAF0]">
       {notice && (
         <div
           role={notice.type === 'error' ? 'alert' : 'status'}
           aria-live={notice.type === 'error' ? 'assertive' : 'polite'}
-          className={`absolute top-4 right-4 z-[70] flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-2xl backdrop-blur-md ${
+          className={`absolute top-3 right-3 z-[70] flex max-w-md items-center gap-2.5 rounded border px-3 py-2 text-xs shadow-lg backdrop-blur-md ${
             notice.type === 'error'
-              ? 'border-rose-500/40 bg-rose-950/95 text-rose-100'
+              ? 'border-[#7f1d1d] bg-[#2d1b1f] text-[#f87171]'
               : notice.type === 'success'
-                ? 'border-emerald-500/40 bg-emerald-950/95 text-emerald-100'
-                : 'border-indigo-500/40 bg-slate-900/95 text-slate-100'
+                ? 'border-[#065f46] bg-[#162a23] text-[#34d399]'
+                : 'border-[#303A49] bg-[#151B23] text-[#E6EAF0]'
           }`}
         >
           <span className="flex-1">{notice.message}</span>
           <button
             type="button"
             onClick={() => setNotice(null)}
-            className="shrink-0 rounded px-1 text-current/70 hover:text-current focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="shrink-0 font-bold px-1 text-current/70 hover:text-current"
             aria-label="Đóng thông báo"
           >
             ×
@@ -969,8 +977,8 @@ export function App() {
             {displayedPoints.length > 0 ? (
               <Suspense
                 fallback={
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400" role="status">
-                    Đang tải bộ máy đồ họa 3D...
+                  <div className="absolute inset-0 flex items-center justify-center text-xs text-[#929EAF]" role="status">
+                    Đang khởi tạo Three.js Engine...
                   </div>
                 }
               >
@@ -982,7 +990,7 @@ export function App() {
                   selectedPoint={selectedPoint}
                   reductionMethod={isRawDataArea ? 'RAW' : reductionConfig.method}
                   onCameraChange={handlePrimaryCameraChange}
-                  titleBadge={isRawDataArea ? 'DỮ LIỆU GỐC' : isDualView ? `MÀN HÌNH A: ${reductionConfig.method} 3D` : undefined}
+                  titleBadge={isRawDataArea ? 'DỮ LIỆU GỐC (3D TRỤC ĐẶC TRƯNG)' : isDualView ? `MÀN HÌNH A: ${reductionConfig.method} 3D` : undefined}
                   axisFeatures={isRawDataArea ? selectedFeatures.slice(0, 3) : undefined}
                   pcaComponents={isRawDataArea ? undefined : pcaComponents}
                   featureNames={selectedFeatures}
@@ -995,20 +1003,20 @@ export function App() {
                 />
               </Suspense>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-slate-500">
+              <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-xs text-[#929EAF]">
                 {dataset
-                  ? 'Chọn ít nhất 3 đặc trưng số để xem dữ liệu gốc trên biểu đồ 3D.'
-                  : 'Chọn dữ liệu để xem trước dữ liệu gốc.'}
+                  ? 'Chọn ít nhất 3 đặc trưng số để trực quan hóa dữ liệu trên biểu đồ 3D.'
+                  : 'Vui lòng chọn bộ dữ liệu để bắt đầu phân tích.'}
               </div>
             )}
           </div>
 
           {/* Viewport 2 (Dual Secondary with Camera Synchronization) */}
           {isDualView && !isRawDataArea && (
-            <div className="flex-1 h-full relative border-l-2 border-indigo-600/50">
+            <div className="flex-1 h-full relative border-l border-[#303A49]">
               <Suspense
                 fallback={
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400" role="status">
+                  <div className="absolute inset-0 flex items-center justify-center text-xs text-[#929EAF]" role="status">
                     Đang tải bộ máy đồ họa 3D...
                   </div>
                 }
@@ -1033,9 +1041,9 @@ export function App() {
 
         {/* Loading Overlay */}
         {isComputing && (
-          <div className="absolute inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-            <div className="text-sm font-semibold tracking-wide text-indigo-300">
+          <div className="absolute inset-0 z-50 bg-[#0D1117]/80 backdrop-blur-xs flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-[#303A49] border-t-[#8B9CFB] animate-spin" />
+            <div className="text-xs font-semibold tracking-wide text-[#8B9CFB]">
               {loadingMessage || 'Đang xử lý tính toán...'}
             </div>
           </div>
@@ -1048,13 +1056,17 @@ export function App() {
           theme={theme}
         />
 
-        {/* Docked metrics stay outside the interactive canvas area. */}
-        <div className={`shrink-0 border-t px-3 py-2 transition-colors duration-200 ${theme === 'light' ? 'border-slate-300 bg-white/95 text-slate-800' : 'border-slate-800/80 bg-slate-950/90 text-slate-100'}`}>
+        {/* Docked Results Panel at Bottom */}
+        <div className="shrink-0 border-t border-[#303A49] bg-[#151B23]">
           <MetricsPanel
             metrics={metrics}
             reductionMethod={reductionConfig.method}
+            clusteringMethod={clusteringConfig.method}
+            datasetName={dataset ? dataset.name : 'Chưa chọn'}
+            totalRows={dataset ? dataset.totalRows : 0}
             hasGroundTruth={Boolean(dataset?.labelColumn)}
             hasResults={dataPoints.length > 0}
+            isComputing={isComputing}
             onSaveExperiment={handleSaveExperiment}
             onOpenHistory={handleOpenHistory}
             isSaving={isSavingExperiment}
