@@ -203,7 +203,7 @@ export function App() {
           setDbStatus(isRecord(data) && typeof data.database === 'string' ? data.database : 'Online');
         }
       } catch {
-        setDbStatus('In-Memory Mode');
+        setDbStatus('Trực tiếp (Client-Side)');
       }
     };
     checkDbHealth();
@@ -536,9 +536,8 @@ export function App() {
             setPcaComponents(undefined);
           }
           wasFromBackend = true;
-      } catch (err: unknown) {
-        console.warn('API tính toán không khả dụng, chuyển sang tính cục bộ:', err);
-        setNotice({ type: 'info', message: 'Backend chưa sẵn sàng; kết quả được tính trực tiếp trên trình duyệt.' });
+      } catch {
+        // Backend API offline on static cloud -> compute locally seamlessly
       }
 
       // 2. Client-Side Fallback if Backend is unreachable
@@ -623,6 +622,10 @@ export function App() {
       });
 
       setDualDataPoints(dualPoints);
+      setNotice({
+        type: 'success',
+        message: `Đã giảm chiều 3D thành công bằng ${reductionConfig.method} (${durationMs} ms)!`,
+      });
     } catch (err: unknown) {
       console.error(err);
       setNotice({ type: 'error', message: `Lỗi tính toán: ${getErrorMessage(err)}` });
@@ -694,6 +697,10 @@ export function App() {
       noiseCount,
       executionTimeMs: (current.executionTimeMs || 0) + durationMs,
     }));
+    setNotice({
+      type: 'success',
+      message: `Đã áp dụng phân cụm ${config.method} thành công (${durationMs} ms)!`,
+    });
   };
   const isRawDataArea = activeArea === 'dataset';
   const displayedPoints = isRawDataArea ? rawPreviewPoints : dataPoints;
